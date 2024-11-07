@@ -1,0 +1,38 @@
+# TO DO LIST
+############
+
+paragraph's title: ########### SqlModel ###########
+
+06 NOV 2024:
+- [mainWindow] setting the query as the model for the QListView cannot be done, use QSqlRelationalModel for foreign keys
+
+- [mainWindow] How to filter the model based on the "chassis_ID" when provided in the QLineEdit ?
+               QSolterFilterProxyModel? but how I edit the core model ? or is better to create a CustomModel?
+
+- [CommentsWidget] write two static mathods for formatting a QDatetime like so (european time format dd/mm/yyyy):
+                   1) post's date                  --> Mon, 24 Sept 2024 @username ► 11:35
+                   2) modification post's date     --> edited: 30/09/24 ► 16:35
+
+
+
+paragraph's title: ########### UserName for CommentsWidget ###########
+
+06 NOV 2024:
+- [commentListItem] At the moment
+
+
+
+
+model sample:
+
+TABLE_NAME : ####   VEH_COMMENTS    ###
+
+||        ID      ||      car_chassis_id      ||      post_date       ||      comment_description     ||      user_ID(comment's author)       ||        post_edited_datetime        ||
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+TABLE_NAME : ####   USERS    ###
+ID = foreign_key for user_ID(comment's author)
+
+||        ID      ||      user_email      ||      password       ||      user_privilages     ||
+-----------------------------------------------------------------------------------------------

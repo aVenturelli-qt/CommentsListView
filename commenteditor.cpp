@@ -48,7 +48,7 @@ CommentEditor::CommentEditor(CommentsWidget* comment_wdg, QWidget *parent)
     ui->setupUi(this);
     m_body_txt = m_comment_wgd->bodyText();
     m_datetime_str = m_comment_wgd->postedDateText();
-    m_mod_datetime_str = m_comment_wgd->modifiedText();
+    m_mod_datetime_str = m_comment_wgd->editingDateText();
 
     /*  Set the values for the widget in the UI  */
     ui->post_date_lbl->setText(m_datetime_str);
@@ -65,6 +65,12 @@ CommentEditor::CommentEditor(CommentsWidget* comment_wdg, QWidget *parent)
 
     /* install eventFilter on QPlainTextEdit to parse Ctrl+Return keys */
     ui->body_txte->installEventFilter(this);
+}
+
+CommentEditor::CommentEditor(QWidget *parent)
+    : QWidget(parent), ui(new Ui::CommentEditor)
+{
+    ui->setupUi(this);
 }
 
 
@@ -93,10 +99,15 @@ void CommentEditor::setCommentsWidget(CommentsWidget* commentWidget)
 
     m_comment_wgd = commentWidget;
 
-    /* Update the variables */
+    /* Update the variables and UI*/
     m_body_txt = commentWidget->bodyText();
+    ui->body_txte->setPlainText(m_body_txt);
+
     m_datetime_str = commentWidget->postedDateText();
-    m_mod_datetime_str = commentWidget->modifiedText();
+    ui->post_date_lbl->setText(m_datetime_str);
+
+    m_mod_datetime_str = commentWidget->editingDateText();
+    ui->mod_date_lbl->setText(m_mod_datetime_str);
 
     /* hide/show the modified_date text if given */
     if ( m_mod_datetime_str.length() < 5)
@@ -111,7 +122,7 @@ void CommentEditor::setCommentsWidget(CommentsWidget* commentWidget)
 /* SETTERS */
 void CommentEditor::setBodyText(QString& txt)
 {
-    m_comment_wgd->setBodyText(txt);
+    m_comment_wgd->setCommentBody(txt);
     m_body_txt = txt;
 }
 
@@ -121,49 +132,31 @@ void CommentEditor::setBodyText(char* txt)
     this->setBodyText(text);
 }
 
-void CommentEditor::setDatetimeStr(QString& txt)
+void CommentEditor::setPostDate(QString& txt)
 {
-    m_comment_wgd->setPostedDateText(txt);
+    m_comment_wgd->setPostDate(txt);
     m_datetime_str = txt;
 }
 
-void CommentEditor::setDatetimeStr(char* txt)
+void CommentEditor::setPostDate(char* txt)
 {
     QString text(txt);
-    this->setDatetimeStr(text);
+    this->setPostDate(text);
 }
 
-void CommentEditor::setModifiedDatetimeStr(QString& txt)
+void CommentEditor::setEditingDate(QString& txt)
 {
-    m_comment_wgd->setModifiedText(txt);
+    m_comment_wgd->setEditingDate(txt);
     m_mod_datetime_str = txt;
 }
 
-void CommentEditor::setModifiedDatetimeStr(char* txt)
+void CommentEditor::setEditingDate(char* txt)
 {
     QString text(txt);
-    this->setModifiedDatetimeStr(text);
+    this->setEditingDate(text);
 }
 /* END SETTERS */
 
-
-/*
-void CommentEditor::paintEvent(QPaintEvent* event)
-{
-    Q_UNUSED(event)
-    QPainter painter(this);
-    m_comment_wgd->paint(&painter, this->rect(), this->palette(), CommentsWidget::EditMode::Editable);
-}
-
-
-void CommentEditor::keyPressEvent(QKeyEvent* event)
-{
-    if (event->key() == Qt::Key_Enter)
-    {
-        emit editingFinished();
-    }
-}
-*/
 
 bool CommentEditor::eventFilter(QObject *object, QEvent *event)
 {
@@ -173,15 +166,12 @@ bool CommentEditor::eventFilter(QObject *object, QEvent *event)
     */
     if ( object == ui->body_txte && event->type() == QEvent::KeyPress)
     {
-        qDebug() << "Detected keys for: QPlainTextEdit";
-
         QKeyEvent* keys = static_cast<QKeyEvent*>(event);
         auto mod_key = keys->modifiers();
         auto key = keys->key();
 
         if (mod_key == Qt::Modifier::CTRL && key == Qt::Key_Return)
         {
-            qDebug() << "Ctrl + Return keys detected\n" << "committing editor...\n\n";
             emit editingFinished();
             return true;
         }

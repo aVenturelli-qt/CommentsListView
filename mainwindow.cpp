@@ -43,6 +43,7 @@
 #include "ui_mainwindow.h"
 #include "commentlistitem.h"
 
+/* WARNING HERE*/
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -52,18 +53,25 @@ MainWindow::MainWindow(QWidget *parent)
     this->setUpDb();
 
     // set the model to QList and QTable
-    // _m_model = new QSqlQueryModel;
     _m_model = new QSqlTableModel;
     _m_model->setQuery("SELECT * FROM veh_comments;");
     _m_model->setEditStrategy(QSqlTableModel::OnManualSubmit);
 
+    /*
+     * WARNING: This model won't be editable
+     * try using QSqlRelationalModel or
+     * create a custom model
+    */
     ui->tb_view->setModel(_m_model);
 
     auto header = ui->tb_view->horizontalHeader();
     header->setSectionResizeMode(QHeaderView::ResizeToContents);
     ui->tb_view->show();
 
-    ui->lst_vw->setItemDelegate( new CommentListItem );
+    QString username("myUsername");
+
+    CommentListItem* commentItem = new CommentListItem{ username };
+    ui->lst_vw->setItemDelegate( commentItem );
     ui->lst_vw->setEditTriggers(QAbstractItemView::EditTrigger::DoubleClicked);
 
     ui->lst_vw->setModel(_m_model);
@@ -122,7 +130,7 @@ void MainWindow::setUpDb()
     _m_db.setHostName("localhost");
     _m_db.setDatabaseName("test");
     _m_db.setUserName("postgres");
-    _m_db.setPassword("SomeBasicPassword");   // <-- dummy password
+    _m_db.setPassword("password123");   // <-- dummy password
 
 
     if (!_m_db.open()) {

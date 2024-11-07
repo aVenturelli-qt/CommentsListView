@@ -56,6 +56,7 @@ class CommentEditor : public QWidget
 
 public:
     explicit CommentEditor(CommentsWidget* comment_wdg, QWidget *parent = nullptr);
+    explicit CommentEditor(QWidget *parent = nullptr);
     ~CommentEditor();
 
     QSize sizeHint() const override;
@@ -66,21 +67,16 @@ public:
     void setBodyText(QString& txt);
     void setBodyText(char* txt);
 
-    void setDatetimeStr(QString& txt);
-    void setDatetimeStr(char* txt);
+    void setPostDate(QString& txt);
+    void setPostDate(char* txt);
 
-    void setModifiedDatetimeStr(QString& txt);
-    void setModifiedDatetimeStr(char* txt);
+    void setEditingDate(QString& txt);
+    void setEditingDate(char* txt);
 
     /* GETTERS */
     QString bodyText() const;
     QString datetimeStr() const { return m_datetime_str; };
     QString modifiedDatetimeStr() const { return m_mod_datetime_str; };
-
-protected:
-    /*
-    void paintEvent(QPaintEvent* event) override;
-    void keyPressEvent(QKeyEvent* event) override;*/
 
 signals:
     void editingFinished();

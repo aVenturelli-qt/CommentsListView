@@ -47,12 +47,14 @@
 #include <QDateTime>
 #include <QStyledItemDelegate>
 #include <QDateTime>
+#include "commentswidget.h"
 
 class CommentListItem : public QStyledItemDelegate
 {
     Q_OBJECT
 public:
     CommentListItem();
+    CommentListItem(QString& username);
 
     void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
     void setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const override;
@@ -61,8 +63,25 @@ public:
     QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const override;
     QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
 
+    void setUsername(const QString& username) { m_username = username; }
+
+    /*!
+     *  Take an index and use the values provided by the list
+     *  to target the right Column for retriving the correct data:
+     *  es.. QModelIndex.siblingAtColumn( QList[n] ).data()
+     *
+     *  \fn CommentsWidget* CommentListItem::createCommentWidgetFromIndex(QModelIndex& idx, QList<int> data_at_columns)
+     *  \param idx: the QModelIndex where the record receives
+     *  \param data_at_columns: a QList<int> containing 3 values -> [0] post_date, [1] editing_date, [2] comment's body
+
+    */
+    CommentsWidget* createCommentWidgetFromIndex(const QModelIndex& idx, QList<int> data_at_columns) const;
+
 private slots:
     void commitAndCloseEditor();
+
+private:
+    QString m_username;
 };
 
 

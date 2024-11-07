@@ -47,14 +47,35 @@
 #include <QPainter>
 #include <QPainterPath>
 #include <QLinearGradient>
+#include <QTextLayout>
+#include <QDateTime>
 
 
 class CommentsWidget
 {
+    const QColor CARD_BG_NORMAL { QColor(245, 235, 224) };
+
+    static constexpr int HEADER_FONT_SIZE{10};
+    static constexpr int SUB_HEADER_FONT_SIZE{HEADER_FONT_SIZE-2};
+    static constexpr int BODY_FONT_SIZE{14};
+
+    static constexpr int CARD_BORDER_RADIUS{8};
+    static constexpr int SIDE_MARGINS{12};
+    static constexpr int TOP_MARGIN{20};
+
+    static constexpr int SPACING{8};
+    static constexpr int LINE_LENGHT{30};
+
+    const QColor DEFAULT_COLOR{ QColor(Qt::black) };
+    const QColor SELECTED_COLOR{ QColor(Qt::white) };
+    const QColor EDIT_DATE_DEFAULTL_COLOR{ QColor(129, 18, 18) };
+    const QColor EDIT_DATE_SELECTED_COLOR{ QColor(49, 15, 218) };
+
 public:
     enum class EditMode { Editable, ReadOnly };
+    enum class DateType { EditDate, PostDate };
 
-    explicit CommentsWidget(QString& body_txt, QString& timestamp, QString& modified);
+    explicit CommentsWidget(QString& timestamp, QString& modified, QString& body_txt);
     explicit CommentsWidget() {};
 
     CommentsWidget(const CommentsWidget& other);
@@ -62,45 +83,32 @@ public:
 
     QSize sizeHint() const ;
 
-    void paint(QPainter *painter, const QRect &rect, const QPalette &palette, EditMode mode = EditMode::ReadOnly) const;
-    void setBodyText(QString& text)     { m_comment_body = text; };
-    void setModifiedText(QString& text) { m_modified = text; };
-    void setPostedDateText(QString& text) { m_modified = text; };
+    void paint( QPainter *painter, const QRect &rect, const QPalette &palette, EditMode mode = EditMode::ReadOnly) const;
 
-    QString bodyText()       const { return m_comment_body; };
-    QString modifiedText()   const { return m_modified; };
-    QString postedDateText() const { return m_comment_date; };
+    void setCommentBody( QString& text )       { m_comment_body = text; };
+    void setEditingDate( QString& text )   { m_editing_date = text; };
+    void setPostDate( QString& text ) { m_comment_date = text; };
 
-    QLinearGradient gradient() {
-        QLinearGradient grad(QPointF(0, 0), QPointF(1, 1));
-        grad.setColorAt(0, QColor(81, 161, 249));
-        grad.setColorAt(0.38, QColor(150, 108, 230));
-        grad.setColorAt(0.72, QColor(220, 139, 151));
-        //grad.setColorAt(1, QColor(234, 166, 73));
-        grad.setSpread(QLinearGradient::PadSpread);
-        return grad;
-    };
+    QString bodyText()        const { return m_comment_body; };
+    QString editingDateText() const { return m_editing_date; };
+    QString postedDateText()  const { return m_comment_date; };
+
+    static QString formatDatetime( QDateTime& dt, QString username = "emptyUser", DateType type = DateType::EditDate);
 
 private:
-    QString m_comment_body{};
     QString m_comment_date{};
-    QString m_modified{};
-
-    int m_card_h{};
-
-    const QColor CARD_BG_NORMAL { QColor(245, 235, 224) };
-    const QLinearGradient CARD_BG_SELECTED { this->gradient() };
-
-    static constexpr int HEADER_FONT_SIZE{12};
-    static constexpr int SUB_HEADER_FONT_SIZE{HEADER_FONT_SIZE-4};
-    static constexpr int BODY_FONT_SIZE{14};
-    static constexpr int CARD_BORDER_RADIUS{8};
-    static constexpr int SIDE_MARGINS{12};
-    static constexpr int SPACING{8};
-    static constexpr int LINE_LENGHT{15};
+    QString m_editing_date{};
+    QString m_comment_body{};
 
     const QFont builtFont(int pointSize, QString family, QFont::Weight weight) const;
     void setBrushPenColor(QPainter* p, QColor brush_col = QColor(Qt::transparent), QColor pen_color = QColor(Qt::transparent)) const;
+
+    int drawPostDate(QPainter *painter, const QRect &rect, EditMode mode) const;
+    int drawPostBody(QPainter *painter, const QRect &rect, EditMode mode, int y_offset) const;
+    int drawEditingDate(QPainter *painter, const QRect &rect, EditMode mode, int y_offset) const;
+
+    int createTextLayout(const QString& text, QPointF& xy_offset, int wrapAtWidth_px, QPainter* painter = nullptr) const;
+    int createTextLayout(const QString& text, int y_offset, QFont& font, int wrapAtWidth_px) const;
 };
 
 Q_DECLARE_METATYPE(CommentsWidget)
