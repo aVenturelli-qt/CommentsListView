@@ -42,6 +42,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "commentlistitem.h"
+#include "db_connection_info.h"
 
 /* WARNING HERE*/
 MainWindow::MainWindow(QWidget *parent)
@@ -50,31 +51,40 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    this->setUpDb();
+    // establish a connection tòthe DB
+    this->setUpDbConnection();
 
     // set the model to QList and QTable
-    _m_model = new QSqlTableModel;
-    _m_model->setQuery("SELECT * FROM veh_comments;");
-    _m_model->setEditStrategy(QSqlTableModel::OnManualSubmit);
+    m_model = new QSqlRelationalTableModel(this, m_db);
+    m_model->setTable("comments_table");
+    m_model->setRelation(1, QSqlRelation("vin_table", "id", "vin"));
+    m_model->setRelation(2, QSqlRelation("users_table", "id", "mail"));
+    m_model->setJoinMode(QSqlRelationalTableModel::InnerJoin);
 
-    /*
-     * WARNING: This model won't be editable
-     * try using QSqlRelationalModel or
-     * create a custom model
-    */
-    ui->tb_view->setModel(_m_model);
+    // sorts ascending by ID column
+    m_model->sort(0, Qt::AscendingOrder);
+    m_model->select();
 
+
+    qDebug() << "address of model inside MainWindow::MainWindow(): " << m_model;
+
+
+    // set model and delegate to the view
+    ui->tb_view->setModel(m_model);
+    ui->tb_view->setItemDelegate(new QSqlRelationalDelegate(ui->tb_view));
+
+    // resize column to fit content
     auto header = ui->tb_view->horizontalHeader();
     header->setSectionResizeMode(QHeaderView::ResizeToContents);
     ui->tb_view->show();
 
-    QString username("myUsername");
+    QString username("123user@gmail.com");     /// this must be removed
 
     CommentListItem* commentItem = new CommentListItem{ username };
     ui->lst_vw->setItemDelegate( commentItem );
     ui->lst_vw->setEditTriggers(QAbstractItemView::EditTrigger::DoubleClicked);
 
-    ui->lst_vw->setModel(_m_model);
+    ui->lst_vw->setModel(m_model);
 }
 
 
@@ -83,57 +93,29 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::on_serach_le_returnPressed()
+void MainWindow::on_search_le_returnPressed()
 {
-    // read the id from the lineEdit
-    auto id = ui->serach_le->text();
+    // get the content of QLineEdit
+    auto txt = this->ui->search_le->text();
 
-    if (id == "")
-    {
-        QSqlQuery query("SELECT * FROM veh_comments");
-        _m_model->setQuery(std::move(query));
-    } else {
-        // UPDATE VIEW
-        auto query = commentsPerChassisId(id);
-        _m_model->setQuery(std::move(query));
-    }
-    qDebug() << "Line Edit \"Return_Key\" pressed..\n\n";
+    // set filter whereas txt is empty or not
+    auto filter = (!txt.isEmpty())? QString("vin = '%1'").arg(txt) : "";
+    this->m_model->setFilter(filter);
+    this->m_model->select();
 }
 
-QSqlQuery MainWindow::commentsPerChassisId(const QString& id)
+
+void MainWindow::setUpDbConnection()
 {
-    QSqlQuery my_query(_m_db);
-    my_query.prepare(
-        "SELECT "
-            "veh.*, us.user_name "
+    // connecting to the postgres database
+    m_db = QSqlDatabase::addDatabase("QPSQL");
+    m_db.setHostName(db_info::HOST);
+    m_db.setDatabaseName(db_info::DB_NAME);
+    m_db.setUserName(db_info::USER_NAME);
+    m_db.setPassword(db_info::PASSWORD);
+    m_db.setPort(db_info::PORT);
 
-            "FROM veh_comments AS veh "
-                "INNER JOIN "
-                    "users AS us "
-                "ON us.id = veh.user_id "
-        "WHERE "
-            "veh_serial = ? "
-
-        "ORDER BY "
-            "comment_datetime DESC "
-        );
-
-    my_query.addBindValue(id);
-    my_query.exec();
-
-    return my_query;
-}
-
-void MainWindow::setUpDb()
-{
-    _m_db = QSqlDatabase::addDatabase("QPSQL");
-    _m_db.setHostName("localhost");
-    _m_db.setDatabaseName("test");
-    _m_db.setUserName("postgres");
-    _m_db.setPassword("password123");   // <-- dummy password
-
-
-    if (!_m_db.open()) {
+    if (!m_db.open()) {
         qDebug() << "Error: Could not open database";
     }
 }

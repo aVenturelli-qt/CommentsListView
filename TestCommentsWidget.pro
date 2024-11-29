@@ -20,6 +20,7 @@ HEADERS += \
     commenteditor.h \
     commentlistitem.h \
     commentswidget.h \
+    db_connection_info.h \
     mainwindow.h
 
 FORMS += \

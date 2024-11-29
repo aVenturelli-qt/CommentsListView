@@ -49,19 +49,9 @@ CommentListItem::CommentListItem(QString& username) : m_username{ username } {}
 
 void CommentListItem::paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
-    /*
-    qDebug() << "\n\nthe model index contains:"
-             << index.siblingAtColumn(0).data()         // qulonglong   ID
-             << index.siblingAtColumn(1).data()         // QDatetime    Posting_Datetime
-             << index.siblingAtColumn(2).data()         // QString      Chassis_ID
-             << index.siblingAtColumn(3).data()         // int          User_ID
-             << index.siblingAtColumn(4).data()         // QString      Comment's body
-             << index.siblingAtColumn(5).data();        // QDateTime    Modified_datetime
-    */
-
     if ( index.siblingAtColumn(2).data().canConvert<QString>() )
     {
-        CommentsWidget* cmm_wdg = this->createCommentWidgetFromIndex(index, QList<int>{1, 5, 4});
+        CommentsWidget* cmm_wdg = this->createCommentWidgetFromIndex(index, QList<int>{3, 4, 5});
 
         /*  transparent background   */
         painter->fillRect( option.rect, Qt::transparent );
@@ -83,23 +73,29 @@ void CommentListItem::paint(QPainter* painter, const QStyleOptionViewItem& optio
 
 QWidget* CommentListItem::createEditor( QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index ) const
 {
-    if ( index.siblingAtColumn(2).data().canConvert<QString>() )
+    Q_UNUSED(option)
+
+    if ( index.siblingAtColumn(0).data().canConvert<int>() )
     {
+        if ( m_username != index.siblingAtColumn(2).data().toString())
+        {
+            return nullptr;
+        }
         CommentEditor* editor = new CommentEditor(parent);
         connect( editor, &CommentEditor::editingFinished, this, &CommentListItem::commitAndCloseEditor );
 
         return editor;
     }
 
-    return QStyledItemDelegate::createEditor(parent, option, index);
+    return nullptr;
 }
 
 
 void CommentListItem::setEditorData( QWidget* editor, const QModelIndex &index ) const
 {
-    if ( index.siblingAtColumn(2).data().canConvert<QString>() )
+    if ( index.siblingAtColumn(0).data().canConvert<int>() )
     {
-        CommentsWidget* cmm_wdg = this->createCommentWidgetFromIndex(index, QList<int>{1, 5, 4});
+        CommentsWidget* cmm_wdg = this->createCommentWidgetFromIndex(index, QList<int>{3, 4, 5});
 
         CommentEditor* my_editor = qobject_cast<CommentEditor*>( editor );
         my_editor->setCommentsWidget( cmm_wdg );
@@ -107,35 +103,36 @@ void CommentListItem::setEditorData( QWidget* editor, const QModelIndex &index )
 }
 
 
-/* WARNING HERE */
+
 void CommentListItem::setModelData( QWidget *editor, QAbstractItemModel *model, const QModelIndex &index ) const
 {
-    /*
-     * WARNING: this part do not work
-     * the problem is located in the model.
-     *
-     * To provide editing capabilities try to implement a customModel sub-classing QAbstractModel
-    */
 
-    if ( index.siblingAtColumn(2).data().canConvert<QString>() )
+    auto cast_model = static_cast<QSqlRelationalTableModel*>(model);
+
+    if ( index.siblingAtColumn(0).data().canConvert<int>() )
     {
         CommentEditor* cm_editor = qobject_cast<CommentEditor*>(editor);
         auto cmm_wdg = cm_editor->commentWidget();
         auto body_txt = cmm_wdg.bodyText();
 
-        if ( cm_editor->bodyText() != body_txt )
+        // check if text was changed from the original and is not empty
+        if ( cm_editor->bodyText() != body_txt && !cm_editor->bodyText().isEmpty())
         {
             /* generate the edited_mess_date */
             QDateTime time_now = QDateTime::currentDateTime();
-            auto edited_mess_date = QString("Last Modification: ");
-            edited_mess_date += time_now.toString("ddd, MMM dd HH:mm");
 
             /* update the model */
-            qDebug() << "index.siblingAtColumn(4):\t" << index.siblingAtColumn(4);
-            qDebug() << "index.siblingAtColumn(5):\t" << index.siblingAtColumn(5);
-            model->setData( index.siblingAtColumn(4), QVariant::fromValue( body_txt ) );
-            model->setData( index.siblingAtColumn(5), QVariant::fromValue( edited_mess_date ) );
+            cast_model->setData(
+                index.siblingAtColumn(4),
+                QVariant::fromValue( time_now )
+            );
 
+            cast_model->setData(
+                index.siblingAtColumn(5),
+                QVariant::fromValue( cm_editor->bodyText() )
+            );
+
+            cast_model->submitAll();
         }
     }
 }
@@ -147,7 +144,7 @@ QSize CommentListItem::sizeHint( const QStyleOptionViewItem &option, const QMode
 
     if ( index.siblingAtColumn(2).data().canConvert<QString>() )
     {
-        auto cmm_wdg = this->createCommentWidgetFromIndex( index, QList<int>{1, 5, 4} );
+        auto cmm_wdg = this->createCommentWidgetFromIndex( index, QList<int>{3, 4, 5} );
         QSize cmm_wdg_sizeHint = cmm_wdg->sizeHint();
         delete cmm_wdg; // free up dinamically allocated memory
 
@@ -161,19 +158,21 @@ QSize CommentListItem::sizeHint( const QStyleOptionViewItem &option, const QMode
 /* WARNING HERE */
 CommentsWidget* CommentListItem::createCommentWidgetFromIndex( const QModelIndex& idx, QList<int> data_at_columns ) const
 {
-    /* post's date */
+
+    // retrive the username from column 2 (first column starts from 0)
+    auto userName = qvariant_cast<QString>(
+        idx.siblingAtColumn( 2 ).data()                 // example: user123name@gmail.com
+        );
+    auto at_pos = userName.indexOf('@');
+    auto userName_formatted = userName.chopped(userName.length() - at_pos);     // example: user123name
+
+    // post's date
     auto post_date = qvariant_cast<QDateTime>(
         idx.siblingAtColumn( data_at_columns[0] ).data()
     );
+    auto post_date_str = CommentsWidget::formatDatetime( post_date, userName_formatted, CommentsWidget::DateType::PostDate );
 
-    /*
-     * WARNING: the second parameter of "formatDatetime()" should be retrieved
-     * from the index! not from the member
-     * this version provides a static one for test purpose
-    */
-    auto post_date_str = CommentsWidget::formatDatetime( post_date, m_username, CommentsWidget::DateType::PostDate );
-
-    /* editing comment date */
+    // editing comment date
     auto editing_date = qvariant_cast<QDateTime>(
         idx.siblingAtColumn( data_at_columns[1] ).data()
     );
@@ -199,3 +198,4 @@ void CommentListItem::commitAndCloseEditor()
     emit commitData( editor );
     emit closeEditor( editor );
 }
+

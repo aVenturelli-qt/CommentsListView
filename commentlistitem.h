@@ -47,6 +47,8 @@
 #include <QDateTime>
 #include <QStyledItemDelegate>
 #include <QDateTime>
+#include <QSqlRelationalTableModel>
+#include <QSqlError>
 #include "commentswidget.h"
 
 class CommentListItem : public QStyledItemDelegate

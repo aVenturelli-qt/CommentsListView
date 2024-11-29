@@ -44,9 +44,9 @@
 
 #include <QMainWindow>
 #include <QSqlDatabase>
-#include <QSqlQueryModel>
-#include <QSqlTableModel>
-#include <QSqlQuery>
+#include <QSqlRelationalTableModel>
+#include <QSqlRelation>
+#include <QSqlRelationalDelegate>
 #include <QDebug>
 
 QT_BEGIN_NAMESPACE
@@ -64,18 +64,13 @@ public:
     ~MainWindow();    
 
 private slots:
-    void on_serach_le_returnPressed();
+    void on_search_le_returnPressed();
 
 private:
     Ui::MainWindow *ui;
-    QSqlDatabase _m_db;
-    QSqlQuery _m_query;
-    QSqlTableModel* _m_model;
-    //QSqlQueryModel* _m_model;
+    QSqlDatabase m_db;
+    QSqlRelationalTableModel* m_model;
 
-
-    QSqlQuery commentsPerChassisId(const QString& id);
-
-    void setUpDb();
+    void setUpDbConnection();
 };
 #endif // MAINWINDOW_H

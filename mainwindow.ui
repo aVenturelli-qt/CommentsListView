@@ -16,7 +16,7 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout_3">
     <item>
-     <widget class="QLineEdit" name="serach_le">
+     <widget class="QLineEdit" name="search_le">
       <property name="font">
        <font>
         <pointsize>14</pointsize>
