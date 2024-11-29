@@ -1,6 +1,4 @@
 # CommentsListView
-![image](https://github.com/user-attachments/assets/d95a8674-d138-4c4d-9eaa-caf294b17b1b)
-
 Creating a custom widget to display messages from an SqlModel inside a ListView.
 
 For Editing the list's items, double click the rectangle you want to edit.
