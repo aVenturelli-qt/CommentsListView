@@ -1,4 +1,6 @@
 # CommentsListView
+![image](https://github.com/user-attachments/assets/74923797-a99a-4ca8-98c1-ba894362b1e7)
+
 Creating a custom widget to display messages from an SqlModel inside a ListView.
 
 For Editing the list's items, double click the rectangle you want to edit.
@@ -29,8 +31,22 @@ namespace db_info
 ```
 
 that is used in MainWindow::setUpDbConnection()
-![image](https://github.com/user-attachments/assets/74923797-a99a-4ca8-98c1-ba894362b1e7)
+```c++
+void MainWindow::setUpDbConnection()
+{
+    // connecting to the postgres database
+    m_db = QSqlDatabase::addDatabase("QPSQL");
+    m_db.setHostName(db_info::HOST);
+    m_db.setDatabaseName(db_info::DB_NAME);
+    m_db.setUserName(db_info::USER_NAME);
+    m_db.setPassword(db_info::PASSWORD);
+    m_db.setPort(db_info::PORT);
 
+    if (!m_db.open()) {
+        qDebug() << "Error: Could not open database";
+    }
+}
+```
 
 #--------- SQL CODE to crate DUMMY DB --------------
 
@@ -46,23 +62,23 @@ CREATE TABLE VIN_table (
     MAKE_YEAR DATE
 );
 
--- RECORD 1 
+/* RECORD 1 */ 
 INSERT INTO VIN_table (VIN, PRJ_CODE, MAKE_YEAR)
 VALUES ('5LMPU28A8YLJ84702', 'PRJ100', '2019/01/01'::DATE);
 
--- RECORD 2 
+/* RECORD 2 */
 INSERT INTO VIN_table (VIN, PRJ_CODE, MAKE_YEAR)
 VALUES ('3NIAB51D95L401539', 'PRJ155', '2019/01/01'::DATE);
 
--- RECORD 3 
+/* RECORD 3 */
 INSERT INTO VIN_table (VIN, PRJ_CODE, MAKE_YEAR)
 VALUES ('5N3AA08C14N800205', 'PRJ25', '2017/01/01'::DATE);
 
--- RECORD 4 
+/* RECORD 4 */
 INSERT INTO VIN_table (VIN, PRJ_CODE, MAKE_YEAR)
 VALUES ('4A3AK34YIXE055700', 'PRJ75', '2010/01/01'::DATE);
 
--- RECORD 5 
+/* RECORD 5 */
 INSERT INTO VIN_table (VIN, PRJ_CODE, MAKE_YEAR)
 VALUES ('2GIWF52E749130019', 'PRJ10', '2020/01/01'::DATE);
 
@@ -83,19 +99,19 @@ CREATE TABLE USERS_table (
     PRIVILAGE VARCHAR(32) CHECK(PRIVILAGE IN ('ADMIN', 'USER'))
 );
 
--- RECORD 1 
+/* RECORD 1 */
 INSERT INTO USERS_table (MAIL, PASSWORD, PRIVILAGE)
 VALUES ('userl@gmail.com', '123password', 'USER');
 
--- RECORD 2 
+/* RECORD 2 */
 INSERT INTO USERS_table (MAIL, PASSWORD, PRIVILAGE)
 VALUES ('123user@gmail.com', 'qwerty135', 'USER');
 
--- RECORD 3 
+/* RECORD 3 */
 INSERT INTO USERS_table (MAIL, PASSWORD, PRIVILAGE)
 VALUES ('us.er@gmail.com', 'simplePassword', 'ADMIN');
 
--- RECORD 4 
+/* RECORD 4 */
 INSERT INTO USERS_table (MAIL, PASSWORD, PRIVILAGE)
 VALUES ('random_user@gmail.com', 'pASSW0rd', 'ADMIN');
 
@@ -127,23 +143,23 @@ CREATE TABLE COMMENTS_table (
         REFERENCES USERS_table(id)
 );
 
--- RECORD 1 
+/* RECORD 1 */
 INSERT INTO COMMENTS_table (CHASSIS_ID, USER_ID, POST_DATE, BODY_MESSAGE)
 VALUES (3, 2, '2023/02/19 13:30:00'::timestamp, 'RANDOM TEXT 1');
 
--- RECORD 2 
+/* RECORD 2 */
 INSERT INTO COMMENTS_table (CHASSIS_ID, USER_ID, POST_DATE, POST_EDITING_DATE, BODY_MESSAGE)
 VALUES (3, 2, '2023/06/20 11:30:00'::timestamp, '2023/06/22 14:30:00'::timestamp, '123 TEXT TEXT');
 
--- RECORD 3 
+/* RECORD 3 */ 
 INSERT INTO COMMENTS_table (CHASSIS_ID, USER_ID, POST_DATE, BODY_MESSAGE)
 VALUES (2, 1, '2023/07/03 8:30:00'::timestamp, 'TEST MESSAGE');
 
--- RECORD 4 
+/* RECORD 4 */
 INSERT INTO COMMENTS_table (CHASSIS_ID, USER_ID, POST_DATE, BODY_MESSAGE)
 VALUES (3, 4, '2023/09/08 10:20:00'::timestamp, 'RND TEXT 2');
 
--- RECORD 5 
+/* RECORD 5 */
 INSERT INTO COMMENTS_table (CHASSIS_ID, USER_ID, POST_DATE, POST_EDITING_DATE, BODY_MESSAGE)
 VALUES (1, 3, '2024/12/24 18:30:00'::timestamp, '2025/01/05 11:55:00'::timestamp, 'TXT TXT TXT');
 
